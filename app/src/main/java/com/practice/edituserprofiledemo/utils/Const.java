@@ -17,9 +17,8 @@ import okhttp3.RequestBody;
 public class Const {
 
 
-    public static MultipartBody.Part bitmapConvertToFile(Context context, Bitmap bitmap, int type) { // 비트맵 -> 파일로
-
-
+    public static MultipartBody.Part bitmapConvertToFile(Context context, Bitmap bitmap, int type) {
+        // 비트맵 -> 파일로
         FileOutputStream fileOutputStream = null;
         File bitmapFile = null;
         try {

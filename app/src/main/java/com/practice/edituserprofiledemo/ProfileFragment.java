@@ -88,7 +88,7 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
     // private Bitmap cameraBitmap;
 
     String baseUrl = "http://www.ppizil.kro.kr/review/v1/file/";
-    private String IMG_BASE_URL ="http://www.ppizil.kro.kr/review/file/";
+    private String IMG_BASE_URL = "http://www.ppizil.kro.kr/review/file/";
     String thumbnailImagePath = "http://www.ppizil.kro.kr/review/files/1.jpeg";
     String originImagePath = "http://www.ppizil.kro.kr/review/files/0.jpeg";
 
@@ -205,19 +205,13 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
     }
 
 
-//    //Bitmap 인자로 받도록
-//    public void fixOrientation(Bitmap bitmap) {
-//        int width=0;
-//        int height =0;
-//        Matrix matrix = new Matrix();
-//        matrix.postRotate(90);
-//        if (bitmap.getWidth() > bitmap.getHeight()) {
-//
-//        }
-//        else{
-//
-//        }
-//    }
+    //    //Bitmap 인자로 받도록
+    public Bitmap fixOrientation(Bitmap bitmap) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(90);
+        bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+        return bitmap;
+    }
 
 
     public void onResult(int requestCode, int resultCode, @Nullable Intent data) throws IOException {
@@ -232,21 +226,23 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
                     Log.e("bbb", "onActivityResult: " + image_uri);
                     String uriPath = getRealPathFromURI(image_uri);
                     bitmap = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), image_uri);
-                    setImageResource(image_uri.toString(),profileView);
+                    setImageResource(image_uri.toString(), profileView);
                     updateData(bitmap);
+
 
                     break;
 
                 case REQUEST_CAMERA:
                     bitmap = (Bitmap) data.getExtras().get("data");
 
-                    // bitmap =fixOrientation(bitmap);
+
                     String uriPathPicture = MediaStore.Images.Media.insertImage(getActivity().getContentResolver(), bitmap, "title", null);
+                    bitmap = fixOrientation(bitmap);
                     image_uri = Uri.parse(uriPathPicture);
 
                     compressImage(uriPathPicture);
                     String uriPathReal = getRealPathFromURI(image_uri);
-                    setImageResource(image_uri.toString(),profileView);
+                    setImageResource(image_uri.toString(), profileView);
                     updateData(bitmap);
                     break;
             }
@@ -337,12 +333,11 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
                     //  String imagePath = baseStoragePath+resultData.get("uri").getAsString();
                     // String img = response.body().getResultData().get("storedPath").getAsString();
 
-                     setImageResource(thumbnailImage,profileView);
+                    setImageResource(thumbnailImage, profileView);
 
 
                     Toast.makeText(getActivity(), thumbnailImage, Toast.LENGTH_LONG).show();
-                }
-                else{
+                } else {
                     //Toast.makeText(getContext(),)
                 }
             }
@@ -358,8 +353,7 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
     }
 
 
-
-    public void setImageResource(String url , ImageView imageView){
+    public void setImageResource(String url, ImageView imageView) {
         Glide.with(this)
                 .load(url)
                 .centerCrop()
