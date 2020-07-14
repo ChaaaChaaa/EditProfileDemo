@@ -45,11 +45,13 @@ import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.gun0912.tedpermission.PermissionListener;
 import com.gun0912.tedpermission.TedPermission;
 import com.practice.edituserprofiledemo.model.PImageData;
 import com.practice.edituserprofiledemo.model.entity.ApiResultDto;
+import com.practice.edituserprofiledemo.utils.Const;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -86,6 +88,7 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
     // private Bitmap cameraBitmap;
 
     String baseUrl = "http://www.ppizil.kro.kr/review/v1/file/";
+    private String IMG_BASE_URL ="http://www.ppizil.kro.kr/review/file/";
     String thumbnailImagePath = "http://www.ppizil.kro.kr/review/files/1.jpeg";
     String originImagePath = "http://www.ppizil.kro.kr/review/files/0.jpeg";
 
@@ -109,8 +112,6 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
         // Required empty public constructor
         super();
     }
-
-
 
 
     @Override
@@ -204,50 +205,49 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
     }
 
 
-
-    public void fixOrientation() {
-        if (bitmap.getWidth() > bitmap.getHeight()) {
-            Matrix matrix = new Matrix();
-            matrix.postRotate(90);
-            bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-        }
-    }
+//    //Bitmap 인자로 받도록
+//    public void fixOrientation(Bitmap bitmap) {
+//        int width=0;
+//        int height =0;
+//        Matrix matrix = new Matrix();
+//        matrix.postRotate(90);
+//        if (bitmap.getWidth() > bitmap.getHeight()) {
+//
+//        }
+//        else{
+//
+//        }
+//    }
 
 
     public void onResult(int requestCode, int resultCode, @Nullable Intent data) throws IOException {
         Log.e("aaa", requestCode + "," + resultCode);
         if (resultCode != getActivity().RESULT_CANCELED) {
+            Bitmap bitmap = null;
+
             switch (requestCode) {
                 case PICK_IMAGE_REQUEST:
                     image_uri = data.getData();
 
                     Log.e("bbb", "onActivityResult: " + image_uri);
                     String uriPath = getRealPathFromURI(image_uri);
-                    Bitmap bitmap = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), image_uri);
-                    if (bitmap.getWidth() > MAX_WIDTH || bitmap.getHeight() > MAX_HEIGHT) {
-                       bitmap= resizeImage(bitmap);
-                    }
-                    fixOrientation();
-                    profileView.setImageBitmap(bitmap);
-                    updateData(uriPath);
+                    bitmap = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), image_uri);
+                    setImageResource(image_uri.toString(),profileView);
+                    updateData(bitmap);
 
                     break;
 
                 case REQUEST_CAMERA:
                     bitmap = (Bitmap) data.getExtras().get("data");
 
-                    fixOrientation();
+                    // bitmap =fixOrientation(bitmap);
                     String uriPathPicture = MediaStore.Images.Media.insertImage(getActivity().getContentResolver(), bitmap, "title", null);
                     image_uri = Uri.parse(uriPathPicture);
-                    if (bitmap.getWidth() > MAX_WIDTH || bitmap.getHeight() > MAX_HEIGHT) {
-                       bitmap =  resizeImage(bitmap);
-                    }
-
-
 
                     compressImage(uriPathPicture);
                     String uriPathReal = getRealPathFromURI(image_uri);
-                    updateData(uriPathReal);
+                    setImageResource(image_uri.toString(),profileView);
+                    updateData(bitmap);
                     break;
             }
         }
@@ -264,14 +264,6 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
             t.printStackTrace();
         }
     }
-
-    private Bitmap resizeImage(Bitmap bitmap) {
-        int newWidth = (int) (bitmap.getWidth() * 0.8);
-        int newHeight = (int) (bitmap.getWidth() * 0.8);
-        Bitmap resizedImage = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true);
-        return resizedImage;
-    }
-
 
     private String getRealPathFromURI(Uri contentUri) {
         //String[] filePathColumn = {MediaStore.Images.Media.DATA};
@@ -303,24 +295,25 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
     }
 
 
-    private void updateData(String uri) {
-        imageUriRetrofit = uri;
-        Log.e("connect0000", uri);
-        File file = new File(uri);
-        RequestBody originalFile = RequestBody.create(file, MediaType.parse("image/JPEG"));
+    private void updateData(Bitmap bitmap) {
+        // imageUriRetrofit = uri;
+        // Log.e("connect0000", uri);
+
+        MultipartBody.Part originalFile = Const.bitmapConvertToFile(getContext(), bitmap, 0);
+        Bitmap thumbNail = Const.resizeThumnail(bitmap, bitmap.getWidth(), bitmap.getHeight());
+        MultipartBody.Part thumbnailFile = Const.bitmapConvertToFile(getContext(), thumbNail, 1);
+
+        //비트맵 다 썼으니까 리사이클링으로 메모리 회수
+        bitmap.recycle();
+        thumbNail.recycle();
 
         String getToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3QxMUB0ZXN0dGVzdHRlc3QuY29tIiwidWlkIjoxNTQsIm5pY2tuYW1lIjoiaGgiLCJpYXQiOjE1OTQzMDk5MTUsImV4cCI6MTU5NDM5NjMxNX0.D3Ov_dVrIlAr3I_dCBByXqfKOe13FnQU_nZfeBevQ3A";
 
 
         RetrofitInterface api = RetrofitClient.getRestMethods();
-        // MultipartBody.Part originFileName = MultipartBody.Part.createFormData("0", file.getName(), requestFile);
-        // MultipartBody.Part thumbnailFileName = MultipartBody.Part.createFormData("1", file.getName(), requestFile);
-        // name : key값 , filename이 파일명
-        MultipartBody.Part originFileName = MultipartBody.Part.createFormData("files", "0", originalFile);
-        MultipartBody.Part thumbnailFileName = MultipartBody.Part.createFormData("files", "1", originalFile);
 
         // Log.e("connect00", "lll");
-        Call<ApiResultDto> call = api.pimage(getToken, originFileName, thumbnailFileName);
+        Call<ApiResultDto> call = api.pimage(getToken, originalFile, thumbnailFile);
         // Log.e("connect0", "aaaaa");
         call.enqueue(new Callback<ApiResultDto>() {
             @Override
@@ -334,10 +327,8 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
                     PImageData pImageData = new Gson().fromJson(resultData, PImageData.class);
 
 
-                    String storedPath = pImageData.getStoredPath();
-                    int index = storedPath.indexOf(".");
-                    String thumbnailImage = baseUrl + storedPath.substring(0, index) + "Thumbnail";
-                    String originalImage = baseUrl + storedPath;
+                    String thumbnailImage = IMG_BASE_URL + pImageData.getStoredPath().get(0).getThumbPath();
+                    String originalImage = IMG_BASE_URL + pImageData.getStoredPath().get(0).getOriginPath();
                     //setData(thumbnailImage);
                     Log.i("thumbnailImage", thumbnailImage);
                     Log.i("originalImage", originalImage);
@@ -346,10 +337,13 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
                     //  String imagePath = baseStoragePath+resultData.get("uri").getAsString();
                     // String img = response.body().getResultData().get("storedPath").getAsString();
 
-                    setData(uri);
+                     setImageResource(thumbnailImage,profileView);
 
 
-                    Toast.makeText(getActivity(), response.body().toString(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(getActivity(), thumbnailImage, Toast.LENGTH_LONG).show();
+                }
+                else{
+                    //Toast.makeText(getContext(),)
                 }
             }
 
@@ -361,5 +355,14 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
         });
 
 
+    }
+
+
+
+    public void setImageResource(String url , ImageView imageView){
+        Glide.with(this)
+                .load(url)
+                .centerCrop()
+                .into(imageView);
     }
 }
