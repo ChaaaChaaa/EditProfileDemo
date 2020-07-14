@@ -121,7 +121,7 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
         bindView(view);
         imageButton.setOnClickListener(this);
         //setData(KEY_IMAGE);
-        setData(imageUriRetrofit);
+       // setData(imageUriRetrofit);
 
         return view;
     }
@@ -140,14 +140,14 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
         // updateData(photoFile);
     }
 
-    private void setData(String internetUrl) {
-        Glide.with(getActivity())
-                .load(internetUrl)
-                .thumbnail(0.25f)
-                .apply(RequestOptions.circleCropTransform())
-                .into(profileView);
-
-    }
+//    private void setData(String internetUrl) {
+//        Glide.with(getActivity())
+//                .load(internetUrl)
+//                .transform(new CircleCrop())
+//                .thumbnail(0.25f)
+//                .into(profileView);
+//
+//    }
 
     private void selectImage() {
         checkPermission();
@@ -356,7 +356,7 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
     public void setImageResource(String url, ImageView imageView) {
         Glide.with(this)
                 .load(url)
-                .centerCrop()
+                .circleCrop()
                 .into(imageView);
     }
 }
