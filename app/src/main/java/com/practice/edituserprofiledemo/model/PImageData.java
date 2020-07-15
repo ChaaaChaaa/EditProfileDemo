@@ -7,36 +7,15 @@ import java.util.List;
 public class PImageData {
 
     @SerializedName("storedPath")
-    private List<PathEntity> storedPath;
+    private String storedPath;
 
-
-    public List<PathEntity> getStoredPath() {
+    public String getStoredPath() {
         return storedPath;
     }
 
-    public void setStoredPath(List<PathEntity> storedPath) {
+    public void setStoredPath(String storedPath) {
         this.storedPath = storedPath;
     }
 
-    public static class PathEntity {
-        private String originPath;
-        private String thumbPath;
-
-        public String getOriginPath() {
-            return originPath;
-        }
-
-        public void setOriginPath(String originPath) {
-            this.originPath = originPath;
-        }
-
-        public String getThumbPath() {
-            return thumbPath;
-        }
-
-        public void setThumbPath(String thumbPath) {
-            this.thumbPath = thumbPath;
-        }
-    }
 }
 

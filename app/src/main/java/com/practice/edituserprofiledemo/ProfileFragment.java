@@ -1,35 +1,15 @@
 package com.practice.edituserprofiledemo;
 
 import android.Manifest;
-import android.app.Activity;
-import android.content.ActivityNotFoundException;
-import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
 import android.graphics.Matrix;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
-import androidx.exifinterface.media.ExifInterface;
-import androidx.fragment.app.Fragment;
-import androidx.loader.content.CursorLoader;
-
-import android.os.Environment;
 import android.provider.MediaStore;
-import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -39,13 +19,13 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.Fragment;
+import androidx.loader.content.CursorLoader;
+
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.RequestBuilder;
-import com.bumptech.glide.load.resource.bitmap.CircleCrop;
-import com.bumptech.glide.request.RequestOptions;
-import com.bumptech.glide.request.target.Target;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.gun0912.tedpermission.PermissionListener;
 import com.gun0912.tedpermission.TedPermission;
@@ -55,24 +35,13 @@ import com.practice.edituserprofiledemo.utils.Const;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Objects;
 
-import okhttp3.MediaType;
 import okhttp3.MultipartBody;
-import okhttp3.RequestBody;
-import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import retrofit2.http.Multipart;
-
-import static android.app.Activity.RESULT_OK;
-import static com.practice.edituserprofiledemo.Config.KEY_IMAGE;
 
 
 /**
@@ -87,10 +56,13 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
     private ImageButton imageButton;
     // private Bitmap cameraBitmap;
 
-    String baseUrl = "http://www.ppizil.kro.kr/review/v1/file/";
+    //String originalUrl = "";
     private String IMG_BASE_URL = "http://www.ppizil.kro.kr/review/file/";
     String thumbnailImagePath = "http://www.ppizil.kro.kr/review/files/1.jpeg";
     String originImagePath = "http://www.ppizil.kro.kr/review/files/0.jpeg";
+
+
+
 
 
     private static final int REQUEST_CAMERA = 101;
@@ -106,7 +78,6 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
     String imageUriRetrofit;
 
     private Bitmap bitmap;
-    SharedPreferences sharedPreferences;
 
     public ProfileFragment() {
         // Required empty public constructor
@@ -120,8 +91,9 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
         bindView(view);
         imageButton.setOnClickListener(this);
+        profileView.setOnClickListener(this::onClick);
         //setData(KEY_IMAGE);
-       // setData(imageUriRetrofit);
+        // setData(imageUriRetrofit);
 
         return view;
     }
@@ -132,13 +104,29 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
     }
 
     @Override
-    public void onClick(View v) {
-        selectImage();
-
-
-        //updateData(image_uri);
-        // updateData(photoFile);
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.btn_choose_picture:
+                selectImage();
+                break;
+            case R.id.profile_image:
+                setFullImageActivity();
+                break;
+        }
     }
+
+    private void setFullImageActivity(){
+        Intent sendOriginalImageIntent = new Intent(getActivity(), FullImageActivity.class);
+        String path = SharedPreferenceBase.getInstance().getString("PROFILEPATH",null);
+        sendOriginalImageIntent.putExtra("originalImage",path);
+       startActivity(sendOriginalImageIntent);
+    }
+
+//    private void setOriginalImage(String originalImageUrl) {
+//        Intent sendOriginalImagePath = new Intent(getActivity(), FullImageActivity.class);
+//        sendOriginalImagePath.putExtra("originalImage",originalImageUrl);
+//        startActivity(sendOriginalImagePath);
+//    }
 
 //    private void setData(String internetUrl) {
 //        Glide.with(getActivity())
@@ -148,6 +136,11 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
 //                .into(profileView);
 //
 //    }
+
+
+
+
+
 
     private void selectImage() {
         checkPermission();
@@ -282,13 +275,13 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
 //        return MediaStore.Images.Thumbnails.getThumbnail(context.getContentResolver(),fileId,MediaStore.Images.Thumbnails.MICRO_KIND,null);
 //    }
 
-
-    private String convertToString() {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
-        byte[] imgByte = byteArrayOutputStream.toByteArray();
-        return Base64.encodeToString(imgByte, Base64.DEFAULT);
-    }
+//
+//    private String convertToString() {
+//        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+//        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+//        byte[] imgByte = byteArrayOutputStream.toByteArray();
+//        return Base64.encodeToString(imgByte, Base64.DEFAULT);
+//    }
 
 
     private void updateData(Bitmap bitmap) {
@@ -303,8 +296,9 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
         bitmap.recycle();
         thumbNail.recycle();
 
-        String getToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3QxMUB0ZXN0dGVzdHRlc3QuY29tIiwidWlkIjoxNTQsIm5pY2tuYW1lIjoiaGgiLCJpYXQiOjE1OTQzMDk5MTUsImV4cCI6MTU5NDM5NjMxNX0.D3Ov_dVrIlAr3I_dCBByXqfKOe13FnQU_nZfeBevQ3A";
-
+        String getToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3QxMUB0ZXN0dGVzdHRlc3QuY29tIi" +
+                "widWlkIjoxNTQsIm5pY2tuYW1lIjoiaGgiLCJpYXQiOjE1OTQ4MDMzMzAsImV4cCI6MTU5NDg4OTczMH0.Gj-9LMIZAL7" +
+                "-Q0ps-s_nnWR_jb-GnrzHZykORlBSzLA";
 
         RetrofitInterface api = RetrofitClient.getRestMethods();
 
@@ -323,20 +317,30 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
                     PImageData pImageData = new Gson().fromJson(resultData, PImageData.class);
 
 
-                    String thumbnailImage = IMG_BASE_URL + pImageData.getStoredPath().get(0).getThumbPath();
-                    String originalImage = IMG_BASE_URL + pImageData.getStoredPath().get(0).getOriginPath();
+                    String originalImage = IMG_BASE_URL + pImageData.getStoredPath();
                     //setData(thumbnailImage);
-                    Log.i("thumbnailImage", thumbnailImage);
                     Log.i("originalImage", originalImage);
+
+                    //originalUrl = originalImage;
 
 
                     //  String imagePath = baseStoragePath+resultData.get("uri").getAsString();
                     // String img = response.body().getResultData().get("storedPath").getAsString();
 
-                    setImageResource(thumbnailImage, profileView);
+                    SharedPreferenceBase.getInstance().setString("PROFILEPATH",pImageData.getStoredPath());
+                    String path =SharedPreferenceBase.getInstance().getString("PROFILEPATH",null);
 
+                    Log.d("-----path ----",IMG_BASE_URL+path);
+                    //split에 대한 예외 처리 ,
+                    if(path!=null &&path.isEmpty()){
+                        String[] names=path.split("\\.");
+                        String thumbNailPath =names[0]+"Thumbnail";
+                        setImageResource(IMG_BASE_URL+thumbNailPath, profileView);
+                        //setOriginalImage(IMG_BASE_URL+path);
 
-                    Toast.makeText(getActivity(), thumbnailImage, Toast.LENGTH_LONG).show();
+                        Toast.makeText(getActivity(), path, Toast.LENGTH_LONG).show();
+                    }
+
                 } else {
                     //Toast.makeText(getContext(),)
                 }
@@ -348,8 +352,6 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
                 //Logm 으로 하면 자동 Log가 입력이 된다. 이후 TAG 설정을 위해 Logt를 입력하여서 자동 완성 시킨다.
             }
         });
-
-
     }
 
 
@@ -359,4 +361,6 @@ public class ProfileFragment extends Fragment implements Button.OnClickListener 
                 .circleCrop()
                 .into(imageView);
     }
+
+
 }
